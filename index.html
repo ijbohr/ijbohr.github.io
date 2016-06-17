@@ -1,0 +1,319 @@
+﻿<html>
+
+    <head>
+	<meta charset="utf-8">
+        <!-- Latest compiled and minified CSS -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+        <!-- Optional theme -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
+    </head>
+
+    <body>
+        <div class="container-fluid">
+            	<h1>Управление немецких глаголов</h1>
+            <br/>
+            <div class="row">
+                <div class="col-xs-11 col-xs-offset-1 col-sm-5">
+                    <form id="quiz">
+                        <fieldset>
+                            <legend>Выберите правильный вариант</legend>
+                            <div class="form-group pull-left">
+                                	<strong class="name"></strong>
+                                <br/>
+                                	<small class="desc"></small>
+                            </div>
+                            <div class="form-group pull-right">
+                                <div class="btn-group" role="group" aria-label="...">
+                                    <button type="button" class="btn btn-default opt opt0"></button>
+                                    <button type="button" class="btn btn-default opt opt1"></button>
+                                    <button type="button" class="btn btn-default opt opt2"></button>
+                                </div>
+                            </div>
+                        </fieldset>
+                    </form>
+                </div>
+                <div class="col-xs-11 col-xs-offset-1 col-sm-offset-0 col-sm-5">
+                    <fieldset>
+                        <legend>Верные ответы</legend>
+                        <ul class="list-group" id="result">
+                            
+                        </ul>
+                    </fieldset>
+                </div>
+            </div>
+        </div>
+
+        <!-- Latest compiled and minified JavaScript -->
+        <script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
+		<script src="https:/ / maxcdn.bootstrapcdn.com / bootstrap / 3.3.6 / js / bootstrap.min.js " integrity="
+            sha384 - 0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS " crossorigin="
+            anonymous ">
+        </script>
+		<script
+			  src="https://code.jquery.com/ui/1.11.4/jquery-ui.min.js"
+			  integrity="sha256-xNjb53/rY+WmG+4L6tTl9m6PpqknWZvRt0rO1SRnJzw="
+			  crossorigin="anonymous"></script>
+		<!--<script src="dictionary.js"></script>-->
+        <script>
+            function randomInteger(min, max) {
+                var rand = min + Math.random() * (max + 1 - min);
+                rand = Math.floor(rand);
+                return rand;
+            }
+
+            function newAnswer() {
+				var dict = getDictionary();
+				var ex = $('#result').children();			
+				var verb_id = randomInteger(0, dict.verbs.length - 1);
+				var pos = true;
+				while (pos) {
+					pos = false;
+					var verb_id = randomInteger(0, dict.verbs.length - 1);
+					ex.each(function(){
+						if ($(this).attr('verb_id')==verb_id) { pos=true; }
+					});
+				}
+				var verb = dict.verbs[verb_id];
+				
+				var $form = $('#quiz');
+				$form.find('.name').text(verb.name);
+				$form.find('.desc').text(verb.desc);
+				
+				var num0 = num1 = num2 = randomInteger(0, dict.preps.length - 1);
+				while (num1 == num0) { num1 = randomInteger(0, dict.preps.length - 1); }
+				while (num2 == num0 || num2==num1) { num2 = randomInteger(0, dict.preps.length - 1); }
+				var nums = [num0, num1, num2];
+				if (nums.indexOf(verb.prep_id)<0) { nums[randomInteger(0,2)] = verb.prep_id; }
+				
+				for (i=0;i<3;i++) {
+					var $opt = $form.find('.opt'+i);
+					var prep = dict.preps[nums[i]];
+					$opt.text(prep.name + ' + ' + prep.case);
+					$opt.attr('value', prep.id == verb.prep_id);
+					$opt.attr('verb_id', verb_id);
+					$opt.removeClass('btn-default btn-danger btn-primary');
+					$opt.addClass(prep.case === 'D' ? 'btn-danger' : prep.case === 'A' ? 'btn-primary' : 'btn-default');
+				}
+			}
+            
+			$(document).ready(function () {
+				newAnswer();
+				$('.opt').on('click', function () {
+					var $sender = $(this);
+					if ($sender.attr('value')==='true') {
+						var $result = $('#result');
+						var dict = getDictionary();
+						var verb = dict.verbs[$sender.attr('verb_id')];
+						var prep = dict.preps[verb.prep_id];
+						var css = prep.case === 'D' ? 'text-danger' : prep.case === 'A' ? 'text-primary' : 'text-default';
+						var html = 
+							'<li verb_id="' + verb.id +'" class="list-group-item"><p><strong>' + 
+							verb.name.replace('...', '<span class="' + css + '">' + prep.name + ' + ' + prep.case + '</span>') +
+							'</strong>&nbsp<span class="text-muted">('+ verb.desc +')</span>'+
+							'<br/><small>' +
+							verb.example.replace(/#(.*?)#/g, '<span class="' + css + '">$1</span>') +
+							'</small></p></li>';
+						$result.prepend(html);
+						if ($result.children().length>20) {
+							$result.children().last().remove();
+						}
+						newAnswer();
+					}
+					else {
+						$sender.parent().effect('shake');
+					}
+				})
+			});
+			
+        </script>
+		<script>
+			function getDictionary() {
+return {
+                "verbs": [{
+                        "id": 0,
+                        "name": "bereit sein ...",
+                        "desc": "быть готовым к ...",
+                        "prep_id": 0,
+                        "example": "Ich habe das Buch gelernt und jetzt bin ich #zur Prüfung# bereit."
+                    }, {
+                        "id": 1,
+                        "name": "sich beschäftigen ...",
+                        "desc": "заниматься с ...",
+                        "prep_id": 1,
+                        "example": "Er beschäftigt sich #mit den Kindern#."
+                    }, {
+                        "id": 2,
+                        "name": "sich beziehen ...",
+                        "desc": "ссылаться на ...",
+                        "prep_id": 2,
+                        "example": "Ich beziehe mich #auf Ihren Brief# vom 23. September."
+                    }, {
+                        "id": 3,
+                        "name": "bitten ...",
+                        "desc": "просить о ...",
+                        "prep_id": 3,
+                        "example": "Er hat mich #um einen Gefallen# gebeten."
+                    }, {
+                        "id": 4,
+                        "name": "danken ...",
+                        "desc": "благодарить за ...",
+                        "prep_id": 4,
+                        "example": "Ich danke Ihnen #für die Einladung#."
+                    }, {
+                        "id": 5,
+                        "name": "denken ...",
+                        "desc": "помнить о ...",
+                        "prep_id": 5,
+                        "example": "Denkst du #an deine Reise# nach Deutschland in diesem Jahr?"
+                    }, {
+                        "id": 6,
+                        "name": "einen Eindruck ... haben/bekommen",
+                        "desc": "иметь/получить впечатление от ...",
+                        "prep_id": 6,
+                        "example": "Bekommen Sie einen guten Eidruck #vom Theatherbesuch#?"
+                    }, {
+                        "id": 7,
+                        "name": "fahren ...",
+                        "desc": "ехать с .../на ...",
+                        "prep_id": 1,
+                        "example": "Wenn du nach Moskau #mit dem Auto# fahren möchtest, fahr bitte #mit mir#!"
+                    }, {
+                        "id": 8,
+                        "name": "fragen ...",
+                        "desc": "спрашивать о ...",
+                        "prep_id": 7,
+                        "example": "Ich finde mich in der Stadt schlecht zurecht. Fragen Sie bitte einen Passanten #nach dem Weg#!"
+                    }, {
+                        "id": 9,
+                        "name": "sich freuen ... (jetzt)",
+                        "desc": "радоваться ... (нынешнему)",
+                        "prep_id": 8,
+                        "example": "Heute ist mein Geburtstag und ich freue mich #über die Geschenke#."
+                    }, {
+                        "id": 10,
+                        "name": "sich freuen ... (in Zukunft)",
+                        "desc": "радоваться ... (будущему)",
+                        "prep_id": 2,
+                        "example": "-Du siehst sehr glücklich aus. -Ja, ich freuhe mich #auf den Urlaub#: in einem Monat fahre ich nach Österreich."
+                    }, {
+                        "id": 11,
+                        "name": "es handelt sich ...",
+                        "desc": "речь идет о ...",
+                        "prep_id": 3,
+                        "example": "In diesem Brief handelt es sich #um einen neuen Preis# fur die Ausrüstung, die wir lezte Woche bestellen hatten."
+                    }, {
+                        "id": 12,
+                        "name": "hoffen ...",
+                        "desc": "надеяться на ...",
+                        "prep_id": 2,
+                        "example": "Das ist ein großes Problem für unseren Betrieb, deswegen hoffe ich #auf Ihre baldige Antwort#."
+                    }, {
+                        "id": 13,
+                        "name": "sich interessieren ...",
+                        "desc": "интересоваться ...",
+                        "prep_id": 4,
+                        "example": "Ich interessiere mich #für diese Frau#. Wer ist sie?"
+                    }, {
+                        "id": 14,
+                        "name": "... interessiert sein",
+                        "desc": "в ... быть заинтересованным",
+                        "prep_id": 9,
+                        "example": "Wir haben viele Bestellungen, darum sind wir #an schneller Lieferung# der Ausrüstung interessiert."
+                    }, {
+                        "id": 15,
+                        "name": "... stolz sein",
+                        "desc": "... гордиться",
+                        "prep_id": 2,
+                        "example": "Wir haben die tausenden Werkzeugmaschine geliefert, deswegen sind wir #auf diesen Erfolg# stolz."
+                    }, {
+                        "id": 16,
+                        "name": "suchen ...",
+                        "desc": "искать ...",
+                        "prep_id": 7,
+                        "example": "Wenn du heute nichts findest, ich werde morgen #nach dem Buch# suchen."
+                    }, {
+                        "id": 17,
+                        "name": "teilnehmen ...",
+                        "desc": "принимать участие в ...",
+                        "prep_id": 9,
+                        "example": "Herr Orlow, wir hoffen, dass Sie Zeit haben, #an unserer Besprechung# teilzunehmen."
+                    }, {
+                        "id": 18,
+                        "name": "sich verabschieden ...",
+                        "desc": "прощаться с ...",
+                        "prep_id": 6,
+                        "example": "Haben Sie sich #von den Kollegen# verabschieden?"
+                    }, {
+                        "id": 19,
+                        "name": "warten ...",
+                        "desc": "ждать ...",
+                        "prep_id": 2,
+                        "example": "Ich warte hier #auf den Vertreter# der Firma \"Kulon\"."
+                    }, {
+                        "id": 20,
+                        "name": "sich wenden ...",
+                        "desc": "обращаться к ...",
+                        "prep_id": 5,
+                        "example": "Ich habe starken Kopfschmerzen. Ich werde mich #an einen Artzten# wenden."
+                    }, {
+                        "id": 21,
+                        "name": "zufrieden sein ...",
+                        "desc": "быть довольным ...",
+                        "prep_id": 1,
+                        "example": "Kommen Sie bitte rein! Ich bin #mit Ihrem Besuch# sehr zufrieden!"
+                    }, {
+                        "id": 22,
+                        "name": "zuständig sein ...",
+                        "desc": "быть ответственным за ...",
+                        "prep_id": 4,
+                        "example": "Ich kann nicht Ihnen helfen, weil ich #für diese Frage# nicht zuständig bin. Fragen Sie meinen Chef danach!"
+                    }
+                ],
+                "preps": [{
+                        "id": 0,
+                        "name": "zu",
+                        "case": "D"
+                    }, {
+                        "id": 1,
+                        "name": "mit",
+                        "case": "D"
+                    }, {
+                        "id": 2,
+                        "name": "auf",
+                        "case": "A"
+                    }, {
+                        "id": 3,
+                        "name": "um",
+                        "case": "A"
+                    }, {
+                        "id": 4,
+                        "name": "für",
+                        "case": "A"
+                    }, {
+                        "id": 5,
+                        "name": "an",
+                        "case": "A"
+                    }, {
+                        "id": 6,
+                        "name": "von",
+                        "case": "D"
+                    }, {
+                        "id": 7,
+                        "name": "nach",
+                        "case": "D"
+                    }, {
+                        "id": 8,
+                        "name": "über",
+                        "case": "A"
+                    }, {
+                        "id": 9,
+                        "name": "an",
+                        "case": "D"
+                    }
+                ]
+            }
+			}
+		</script>
+    </body>
+
+</html>
